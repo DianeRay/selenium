@@ -5,71 +5,56 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 class Posts(object):
     def __init__(self):
+        '''
         self.title = []
         self.author = []
         self.comments = []
         self.timestamp = []
         self.hash_title_author = {}
         self.hash_author = {}
+        '''
+        self.hash = {'title':0, 'author':1, 'comments':2, 'timestamp':3, 'hash_title_author':4, 'hash_author':5}
+        self.data = [[],[],[],[],{},{}]
     def addPost(self, title, author, comments):
         hash_t_a = md5.new(title+author).digest()
-        if hash_t_a in self.hash_title_author:
+        if hash_t_a in self.data[self.hash[hash_title_author]]:
             print 'Duplicated title & author found'
             title = title+'(dup)'
             hash_t_a = md5.new(title+author).digest()
-        self.title.append(title)
-        self.author.append(author)
-        self.comments.append(int(re.search('[0-9]*',comments)))
-        self.timestamp.append(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-        self.hash_title_author[hash_t_a] = len(title)-1
+        self.data[self.hash['title']].append(title)
+        self.data[self.hash['author']].append(author)
+        self.data[self.hash['comments']].append(re.search('[0-9]*',comments))
+        self.data[self.hash['timestamp']].append(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+        self.data[self.hash['hash_title_author']][hash_t_a] = len(title)-1
         if author in hash_author:
-            self.hash_author[author].append(len(title)-1)
+            self.data[self.hash['hash_author']][author].append(len(title)-1)
         else:
-            self.hash_author[author] = [len(title)-1]
+            self.data[self.hash['hash_author']][author] = [len(title)-1]
     def save(self):
         with open('log.txt', 'w') as f:
-            f.write(str(len(title))+'\n')
-            #f.write('title\n')
-            for i in self.title:
-                f.write(i+'\n')
-            #f.write('author\n')
-            for i in self.author:
-                f.write(i+'\n')
-            #f.write('comments\n')
-            for i in self.comments:
-                f.write(str(i)+'\n')
-            #f.write('timestamp')
-            for i in self.timestamp:
-                f.write(i+'\n')
-            #f.write('hash_title_author\n')
-            for key, value in self.hash_title_author.iteritems():
-                f.write(key+':'+str(value))
-            #f.write('hash_author\n')
-            for key, value in self.hash_author.iteritems():
-                f.write(key+':'+str(value))
+            cata = len(self.data)
+            records = len(self.data[0])
+            f.write(str(records)+'\n')
+            for j in self.data:
+                if type(j) is list:
+                    for i in list(enumerate(j)):
+                        f.write(i+'\n')
+                elif type(j) is dict:
+                    for key, value in j.iteritems():
+                        f.write(key+':'+value))
+
     def load(self):
         with open('log.txt', 'r') as f:
-            records = int(f.readline().replace('\n', ''))
-            self.title = []
-            for i in xrange(records):
-                self.title.append(f.readline().strip('\n'))
-            self.author = []
-            for i in xrange(records):
-                self.author.append(f.readline().strip('\n'))
-            self.comments = []
-            for i in xrange(records):
-                self.comments.append(int(f.readline().strip('\n')))
-            self.timestamp = []
-            for i in xrange(records):
-                self.timestamp.append(f.readline().strip('\n'))
-            self.hash_title_author = {}
-            for i in xrange(records):
-                key, value = re.split(':', f.readline().strip('\n'))
-                self.hash_title_author[key] = int(value)
-            self.hash_author = {}
-            for i in xrange(records):
-                key, value = re.split(':', f.readline().strip('\n'))
-                self.hash_author[key] = int(value)
+            records = int(f.readline().strip('\n'))
+            for j in xrange(len(self.data)):
+                if type(self.data[j]) is list:
+                    for i in xrange(records):
+                        self.data[j].append(f.readline().strip('\n'))
+                elif type(self.data[j]) is dict:
+                    for i in xrange(records):
+                        key, value = re.split(':', f.readline().strip('\n'))
+                        self.data[j][key] = int(value)
+
 class Reddit(object):
     def __init__(self):
         url = 'https://www.reddit.com/r/churning/'
